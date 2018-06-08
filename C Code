@@ -1,0 +1,403 @@
+#include <stdio.h>
+#include <stdlib.h>
+/*
+  "-" = 1;
+  "+" = 2;
+  "/" = 3;
+  "*" = 4 ;
+  "(" = 5 ;
+  "( " = 6;
+  */
+  //most comments were used to check the  work flow by printing
+
+char line[101];  //to store the infix read from file
+char variables[26];  //to store the variables values
+int postfix[100];  //to store the postfix statmeant
+char number[10];  //to store a number which consists of more than one digit
+char operation[8]="(-+/*)";    //used to make the operation control easier and for priority
+int k = 0;
+
+struct stack
+{
+    int sp;
+    int st[100];
+}stack;
+
+int isFull()
+{
+     if (stack.sp > 99 )
+     {
+         return 1;
+     }
+     else{
+        return 0;
+     }
+}
+
+int isEmpty()
+{
+
+    if (stack.sp == 0)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void push(int i)
+{
+   if (!isFull())
+   {
+       stack.st[stack.sp] = i;
+        stack.sp++;
+   }
+
+}
+
+int pop()
+{
+    int i;
+    if (!isEmpty())
+    {
+        stack.sp--;
+       i = stack.st[stack.sp];
+    }
+      return i;
+}
+
+void stackPush(char c)  //this function is used to push operations into stack according to thier priority
+{
+    
+  int flag = 1; //to control the push
+  int token ;
+  int i = 0;
+
+  while(c != operation[i])
+  {
+      i++;     //to calculate the priorty of the parametre
+  }
+
+  token =  i;
+
+   if (token == 5)  //if the token is ")"
+   {
+       while(stack.st[stack.sp -1] != 0)
+       {
+           postfix[k]=pop();
+           k++;
+           postfix[k]=' ';
+           k++;
+
+       }
+       pop(); //pop the "("
+   }
+   else if (token == 0)   // if token is '('
+   {
+       push(token);
+   }
+  else
+  {
+      while(flag)
+        {
+          if (!isEmpty() && stack.st[stack.sp -1 ] > token )
+              {
+                  int temp = pop();
+                 // printf("\n pop yapti degeri %d", temp);
+                   postfix[k] = temp;
+                   k++;
+                   postfix[k]=' ';
+                   k++;
+               }
+         else
+              {
+                 // printf("\n the operation is %d \n ",token );
+          push(token);
+          flag = 0;
+             }
+          }
+ }
+}
+
+void calculateWithPostfix()
+{
+    FILE *file;
+    file =fopen("input.txt","r");
+    if(file == NULL)
+    {
+        printf("file does not exist ");
+
+    }
+    int i ,j=0;
+
+    while(fgets(line,30,file) != NULL)
+    {
+        //printf(" \n scanf while girdi ");
+        printf("\n \n ");
+        printf("\n the infix statment : %s",line);
+
+        //variables[line[0] - "a"] = calculate();
+        i = 4;
+        k=0;
+        printVariables();
+        while(line[i]!= ';')
+           {
+
+
+              // printf(" line while girdi ");
+               if(line[i]>= '0' && line[i] <= '9')
+                {
+                   j =0;
+                  // printf("sayi yakaladi ");
+                    while(line[i]!= ';' && line[i]!= ' ')
+                    {
+                        postfix[k] = line[i];
+                        k++;
+                        i++;
+                    }
+
+                   postfix[k] = ' ';
+                   k++;
+                   i++;
+                }
+
+                else if (line[i]>= 'a' && line[i] <= 'z')
+                {
+                   // printf("char yakaladi ");
+                    postfix[k] = line[i];
+                    k++;
+
+                    postfix[k] = ' ' ;
+                    k++;
+                    i+=2;
+                    //i++;
+                }
+                else
+                {
+                   // printf("\n operation yakaladi \n");
+                    stackPush(line[i]);
+                    i+=2;
+                    //i++;
+                }
+                 printPostFix();
+                 printStack();
+
+            }
+
+             while(!isEmpty())    //pop left operation in the stack
+             {
+                 postfix[k] = pop();
+                    k++;
+                     postfix[k] = ' ' ;
+                    k++;
+                     printPostFix();
+                     printStack();
+
+             }
+                postfix[k] = ' ' ;
+               k++;
+               postfix[k] = ';' ;
+               k++;
+
+               printf(" \n ");
+            variables[ line[0] - 'a'] = calculateThePostfixStatment();
+             printf("\n the result in %c is  %d ",(line[0] ),variables[line[0]- 'a']);
+             printf("\n ara cikis ");
+             printPostFix();
+            printf("\n \n :");
+      //
+    }
+}
+
+int calculateThePostfixStatment()
+{
+    //printf(" postfix cozmeye girdi ");
+    int i=0 ,j,l ;
+    int token;
+    int result;
+    int num2,num1;
+    if(k < 6)
+    {
+        int temp = parseInt(postfix,1);
+        //printf("\n the vaulue to be saved in the variable is %d \n ",temp);
+        return temp;
+    }
+   else{
+        while(postfix[i] != ';' && postfix[i+1] != ';')
+
+           {
+               l=i; //dummy
+              // printf(" postfix while girdi ");
+               if(postfix[i]>= '0' && postfix[i] <= '9')
+                {
+                    //printf(" postfixte sayi yakaladi ");
+                   j =0;
+                    while(postfix[i]!=';' && postfix[i]!=' ')
+                    {
+                        number[j] = postfix[i];
+                        j++;
+                        i++;
+                    }
+                    token = parseInt(number,j);
+                    push(token);
+                    i++;
+                }
+
+                else if (postfix[i]>= 'a' && postfix[i] <= 'z')
+                {
+                    //printf(" postfixte cahr yakaladi ");
+                   token = variables[postfix[i] - 'a'];
+                    push(token);
+                    i+=2;
+                }
+                else if (stack.sp >1 )
+                {
+
+                   /* printf("/n for operation %c stack contains \n ",postfix[i]);
+                     for(j=0;j<10;j++)
+                     {
+                         printf("%d \n", stack.st[j]);
+                     }*/
+
+                    j=0;
+                    num2 = pop();
+                    num1 = pop();
+
+
+                    if  (postfix[i] == 1)          // operation is substraction
+                    {
+
+                        token = num1 - num2;
+                    }
+                    else if (postfix[i]  ==2)       //operation is addition
+                    {
+                       // printf("toplama \n");
+                        token = num1 + num2;
+                    }
+                    else if (postfix[i]  == 3)        //operation is division
+                    {
+                        token = num1 / num2;
+                    }
+                    else if (postfix[i] ==4)           //operation is multiplication
+                    {
+                        token = num1 * num2;
+                    }
+                 push(token);
+                 // i+=2;
+                }
+                if (l==i)
+                      i+=2;
+
+          }
+        }
+       result = pop();
+       printf("\n the result %d " ,result);
+       return result;
+}
+
+
+int parseInt(char *num,int j)
+{
+   // printf(" parse girdi ");
+    int intNumber= 0;
+    int i =0;
+    int mul = 1;
+    while(i < j)
+    {
+        //printf(" parse while girdi ");
+        intNumber*=mul;
+        intNumber += *(num + i) - '0';
+        mul*=10;
+        i++;
+    }
+    return intNumber;
+}
+
+void printStack()
+{
+    int i;
+    printf("stack : ");
+    for(i=0;i<stack.sp;i++)
+    {
+        if ( stack.st[i] == 1)          // operation is substraction
+                    {
+
+                         printf("-");
+                    }
+                    else if (stack.st[i]  ==2)       //operation is addition
+                    {
+                        printf("+");
+                    }
+                    else if (stack.st[i]  == 3)        //operation is division
+                    {
+                       printf("/");
+                    }
+                    else if (stack.st[i] ==4)           //operation is multiplication
+                    {
+                       printf("*");
+                    }
+                    else
+                        {
+                           printf("%c",stack.st[i]);
+                        }
+    }
+}
+
+void printPostFix()
+{
+    int i;
+    printf("\n Postfix :");
+            for(i = 0 ; i<k; i++)
+               {
+                    if ( (int)postfix[i] == 1)          // operation is substraction
+                    {
+
+                         printf("-");
+                    }
+                    else if ((int)postfix[i]  ==2)       //operation is addition
+                    {
+                        printf("+");
+                    }
+                    else if ((int)postfix[i]  == 3)        //operation is division
+                    {
+                       printf("/");
+                    }
+                    else if ((int)postfix[i] ==4)           //operation is multiplication
+                    {
+                       printf("*");
+                    }
+                    else
+                        {
+                           printf("%c",postfix[i]);
+                        }
+               }
+               printf("            ");
+}
+
+void printVariables()
+{
+    int i;
+    printf("   knowing that  ");
+    for(i=0;i<26;i++)
+    {
+        if( variables[i]!=0)
+            printf("%c<-%d ",i +'a',variables[i]);
+    }
+    printf("\n");
+}
+
+int main(int argc, char ** argv)
+{
+    int i,j;
+    for(i=0;i<26;i++)
+    {
+        variables[i]=0;
+    }
+    calculateWithPostfix();
+    printf(" \n \n");
+
+    printVariables();
+    return 0;
+}
